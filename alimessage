@@ -1,0 +1,42 @@
+const axios = require('axios');
+var db = require('../mongoConfig');
+ const SMSClient = require('@alicloud/sms-sdk');
+message=(req,res,next)=>{
+  var phone=req.body.phone;
+  var code=mekecode();
+  console.log("code:",code);
+    db.codeMessage.findOneAndUpdate({"phonenum":phone},{"code":code},{upsert:true}).then(function(responsead){
+      const accessKeyId = 'LTAIr89vqTJhpLvt'
+      const secretAccessKey = 'cOZHjO9wtMQ5sh1COmUJKsuILgV4RP'
+      //初始化sms_client
+      let smsClient = new SMSClient({accessKeyId, secretAccessKey})
+      //发送短信
+      smsClient.sendSMS({
+          PhoneNumbers: phone,
+          SignName: '阿里云短信测试专用',
+          TemplateCode: 'SMS_131340059',
+          TemplateParam: '{"code":\"'+code+'\"}'
+      }).then(function (resa) {
+          let {Code}=resa
+          if (Code === 'OK') {
+              return res.send({'resp':1});
+          }else{
+            return res.send({'resp':null});
+          }
+
+      }, function (err) {
+          console.log("sendSMS error:"+err)
+      })
+  })
+}
+function mekecode(){
+
+  var code='';
+  for ( var i = 0; i < 6; i++) {
+				code += parseInt(Math.random() * 9).toString();
+			}
+    return code;
+ }
+module.exports={
+  message
+}
